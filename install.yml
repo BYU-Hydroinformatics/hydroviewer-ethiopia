@@ -1,0 +1,22 @@
+# This file may be committed to your app code.
+version: 0.0.1
+# This should match the app - package name in your setup.py
+name: hydroviewer_ethiopia_new
+setup_path: setup.py
+
+conda:
+  channels:
+    - conda-forge
+    - rileyhales
+  dependencies:
+    - netcdf4
+    - numpy
+    - pandas
+    - rasterstats
+    - rasterio
+    - requests
+    - pyshp
+    - json
+    - sphinx
+    - shpinx_rtd_theme
+    - geoglows
