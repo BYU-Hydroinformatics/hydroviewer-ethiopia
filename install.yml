@@ -7,7 +7,7 @@ setup_path: setup.py
 conda:
   channels:
     - conda-forge
-    - rileyhales
+    - geoglows
   dependencies:
     - netcdf4
     - numpy

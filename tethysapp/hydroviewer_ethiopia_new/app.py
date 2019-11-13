@@ -10,7 +10,7 @@ class HydroviewerEthiopiaNew(TethysAppBase):
     Tethys app class for HydroViewer Ethiopia.
     """
 
-    name = 'HydroViewer Ethiopia New'
+    name = 'HydroViewer Ethiopia New API'
     index = 'hydroviewer_ethiopia_new:home'
     icon = 'hydroviewer_ethiopia_new/images/ethiopia_logo.png'
     package = 'hydroviewer_ethiopia_new'
@@ -49,14 +49,6 @@ class HydroviewerEthiopiaNew(TethysAppBase):
                 url='ecmwf-rapid',
                 controller='{0}.controllers.ecmwf'.format(base_name)),
             UrlMap(
-                name='lis',
-                url='lis-rapid',
-                controller='{0}.controllers.lis'.format(base_name)),
-            UrlMap(
-                name='hiwat',
-                url='hiwat-rapid',
-                controller='{0}.controllers.hiwat'.format(base_name)),
-            UrlMap(
                 name='get-available-dates',
                 url='get-available-dates',
                 controller='{0}.controllers.get_available_dates'.format(base_name)),
@@ -72,22 +64,6 @@ class HydroviewerEthiopiaNew(TethysAppBase):
                 name='get-time-series',
                 url='ecmwf-rapid/get-time-series',
                 controller='{0}.controllers.ecmwf_get_time_series'.format(base_name)),
-            UrlMap(
-                name='get-time-series',
-                url='lis-rapid/get-time-series',
-                controller='{0}.controllers.lis_get_time_series'.format(base_name)),
-            UrlMap(
-                name='get-time-series',
-                url='hiwat-rapid/get-time-series',
-                controller='{0}.controllers.hiwat_get_time_series'.format(base_name)),
-            UrlMap(
-                name='get-return-periods',
-                url='get-return-periods',
-                controller='{0}.controllers.get_return_periods'.format(base_name)),
-            UrlMap(
-                name='get-return-periods',
-                url='ecmwf-rapid/get-return-periods',
-                controller='{0}.controllers.get_return_periods'.format(base_name)),
             UrlMap(
                 name='get-warning-points',
                 url='get-warning-points',
@@ -128,34 +104,6 @@ class HydroviewerEthiopiaNew(TethysAppBase):
                 name='get_forecast_data_csv',
                 url='ecmwf-rapid/get-forecast-data-csv',
                 controller='{0}.controllers.get_forecast_data_csv'.format(base_name)),
-            UrlMap(
-                name='get_forecast_data_csv',
-                url='lis-rapid/get-forecast-data-csv',
-                controller='{0}.controllers.get_lis_data_csv'.format(base_name)),
-            UrlMap(
-                name='get_forecast_data_csv',
-                url='hiwat-rapid/get-forecast-data-csv',
-                controller='{0}.controllers.get_hiwat_data_csv'.format(base_name)),
-            UrlMap(
-                name='get_forecast_data_csv',
-                url='get-forecast-data-csv',
-                controller='{0}.controllers.get_lis_data_csv'.format(base_name)),
-            UrlMap(
-                name='get_lis_shp',
-                url='get-lis-shp',
-                controller='{0}.controllers.shp_to_geojson'.format(base_name)),
-            UrlMap(
-                name='get_lis_shp',
-                url='lis-rapid/get-lis-shp',
-                controller='{0}.controllers.shp_to_geojson'.format(base_name)),
-            UrlMap(
-                name='get_hiwat_shp',
-                url='get-hiwat-shp',
-                controller='{0}.controllers.shp_to_geojson'.format(base_name)),
-            UrlMap(
-                name='get_hiwat_shp',
-                url='hiwat-rapid/get-hiwat-shp',
-                controller='{0}.controllers.shp_to_geojson'.format(base_name)),
             UrlMap(
                 name='set_def_ws',
                 url='admin/setdefault',
@@ -250,7 +198,7 @@ class HydroviewerEthiopiaNew(TethysAppBase):
             CustomSetting(
                 name='default_model_type',
                 type=CustomSetting.TYPE_STRING,
-                description='Default Model Type : (Options : ECMWF-RAPID, LIS-RAPID, HIWAT-RAPID)',
+                description='Default Model Type : (Options : ECMWF-RAPID)',
                 required=False
             ),
             CustomSetting(
@@ -264,18 +212,6 @@ class HydroviewerEthiopiaNew(TethysAppBase):
                 type=CustomSetting.TYPE_BOOLEAN,
                 description='Hide Watershed Options when default present (True or False) ',
                 required=True,
-                value=False
-            ),
-            CustomSetting(
-                name='lis_path',
-                type=CustomSetting.TYPE_STRING,
-                description='Path to local LIS-RAPID directory',
-                required=False
-            ),
-            CustomSetting(
-                name='hiwat_path',
-                type=CustomSetting.TYPE_STRING,
-                description='Path to local HIWAT-RAPID directory',
-                required=False
+                value=True
             ),
         )
