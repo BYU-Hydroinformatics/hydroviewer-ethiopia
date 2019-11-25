@@ -119,6 +119,7 @@
           <li role="presentation" class="active"><a id="forecast_tab_link" href="#forecast_tab" aria-controls="forecast_tab" role="tab" data-toggle="tab">Forecast</a></li>
           <li role="presentation"><a id="historical_tab_link" href="#historical" aria-controls="historical" role="tab" data-toggle="tab">Historical</a></li>
           <li role="presentation"><a id="flow_duration_tab_link" href="#flow_duration" aria-controls="flow_duration" role="tab" data-toggle="tab">Flow-Duration</a></li>
+          <li role="presentation"><a id="seasonal_avg_tab_link" href="#seasonal_avg" aria-controls="seasonal_avg" role="tab" data-toggle="tab">Seasonal Average</a></li>
           <li role="presentation"><a href="#download" aria-controls="download" role="tab" data-toggle="tab">Download</a></li>
         </ul>
 
@@ -146,6 +147,12 @@
             <div class="panel panel-default">
               <div class="flex-container-row"><img id="fdc-view-file-loading" class="view-file hidden" src="{% static base_name|add:'/images/loader.gif' %}" /></div>
               <div id='fdc-chart' class="panel-body"></div>
+            </div>
+          </div><!-- /.tab-pane -->
+          <div role="tabpanel" class="tab-pane" id="seasonal_avg">
+            <div class="panel panel-default">
+              <div class="flex-container-row"><img id="savg-view-file-loading" class="view-file hidden" src="{% static base_name|add:'/images/loader.gif' %}" /></div>
+              <div id='savg-chart' class="panel-body"></div>
             </div>
           </div><!-- /.tab-pane -->
           <div role="tabpanel" class="tab-pane" id="download">

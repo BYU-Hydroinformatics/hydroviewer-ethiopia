@@ -10,7 +10,7 @@ class HydroviewerEthiopiaNew(TethysAppBase):
     Tethys app class for HydroViewer Ethiopia.
     """
 
-    name = 'HydroViewer Ethiopia New API'
+    name = 'HydroViewer Ethiopia'
     index = 'hydroviewer_ethiopia_new:home'
     icon = 'hydroviewer_ethiopia_new/images/ethiopia_logo.png'
     package = 'hydroviewer_ethiopia_new'
@@ -81,6 +81,10 @@ class HydroviewerEthiopiaNew(TethysAppBase):
                 url='get-flow-duration-curve',
                 controller='{0}.controllers.get_flow_duration_curve'.format(base_name)),
             UrlMap(
+                name='get-seasonal-avg-curve',
+                url='get-seasonal-avg-curve',
+                controller='{0}.controllers.get_seasonal_avg_curve'.format(base_name)),
+            UrlMap(
                 name='get_historic_data_csv',
                 url='get-historic-data-csv',
                 controller='{0}.controllers.get_historic_data_csv'.format(base_name)),
@@ -96,6 +100,10 @@ class HydroviewerEthiopiaNew(TethysAppBase):
                 name='get-flow-duration-curve',
                 url='ecmwf-rapid/get-flow-duration-curve',
                 controller='{0}.controllers.get_flow_duration_curve'.format(base_name)),
+            UrlMap(
+                name='get-seasonal-avg-curve',
+                url='ecmwf-rapid/get-seasonal-avg-curve',
+                controller='{0}.controllers.get_seasonal_avg_curve'.format(base_name)),
             UrlMap(
                 name='get_historic_data_csv',
                 url='ecmwf-rapid/get-historic-data-csv',

@@ -4,6 +4,7 @@ from tethys_sdk.gizmos import *
 from django.http import HttpResponse, JsonResponse
 from tethys_sdk.permissions import has_permission
 from tethys_sdk.base import TethysAppBase
+from io import StringIO
 
 import os
 import requests
@@ -238,6 +239,7 @@ def ecmwf_get_time_series(request):
     try:
         # model = get_data['model']
         comid = get_data['comid']
+        tot_drain_area = get_data['tot_drain_area']
 
 
         # New api
@@ -245,7 +247,8 @@ def ecmwf_get_time_series(request):
         ensembles = geoglows.streamflow.forecast_ensembles(comid)
         r_periods = geoglows.streamflow.return_periods(comid)
 
-        forecast_plot = geoglows.streamflow.forecast_plot(stats, r_periods, comid, outformat='plotly_html')
+        forecast_plot = geoglows.streamflow.forecast_plot(stats, r_periods, reach_id=comid, drain_area=tot_drain_area+" km<sup>2</sup>",
+                                                          outformat='plotly_html')
         prob_table = geoglows.streamflow.probabilities_table(stats, ensembles, r_periods)
 
         return JsonResponse(dict(plot=forecast_plot, table=prob_table))
@@ -266,29 +269,8 @@ def get_available_dates(request):
     comid = int(comid)
 
     # New api
-    avail_dates = geoglows.streamflow.available_dates(comid, api_source=BYU_ENDPOINT, api_key=None)
+    avail_dates = geoglows.streamflow.available_dates(comid)
 
-    # res = requests.get(
-    #     app.get_custom_setting('api_source') + '/apps/streamflow-prediction-tool/api/GetAvailableDates/?watershed_name=' +
-    #     watershed + '&subbasin_name=' + subbasin, verify=False,
-    #     headers={'Authorization': 'Token ' + app.get_custom_setting('spt_token')})
-    #
-    # dates = []
-    # for date in eval(res.content):
-    #     if len(date) == 10:
-    #         date_mod = date + '000'
-    #         date_f = dt.datetime.strptime(date_mod, '%Y%m%d.%H%M').strftime('%Y-%m-%d %H:%M')
-    #     else:
-    #         date_f = dt.datetime.strptime(date, '%Y%m%d.%H%M').strftime('%Y-%m-%d %H:%M')
-    #     dates.append([date_f, date, watershed, subbasin, comid])
-    #
-    # dates.append(['Select Date', dates[-1][1]])
-    # dates.reverse()
-
-    # return JsonResponse({
-    #     "success": "Data analysis complete!",
-    #     "available_dates": json.dumps(dates)
-    # })
 
     return JsonResponse(avail_dates)
 
@@ -302,6 +284,7 @@ def get_historic_data(request):
 
     try:
         comid = get_data['comid']
+        tot_drain_area = get_data['tot_drain_area']
 
 
         # New api
@@ -309,7 +292,7 @@ def get_historic_data(request):
         historic_sim = geoglows.streamflow.historic_simulation(comid)
 
         return JsonResponse(dict(plot=geoglows.streamflow.historical_plot(historic_sim,
-                                                                          rperiods, comid, outformat='plotly_html')))
+                    rperiods, reach_id=comid, drain_area=tot_drain_area+" km<sup>2</sup>", outformat='plotly_html')))
 
     except Exception as e:
         print(str(e))
@@ -328,61 +311,38 @@ def get_flow_duration_curve(request):
         region = get_data['region']
         units = 'metric'
 
-        # Not on new api
+        # New api
+        historic_sim = geoglows.streamflow.historic_simulation(comid)
+        flow_dur = geoglows.streamflow.flow_duration_curve_plot(historic_sim, drain_area=tot_drain_area+" km<sup>2</sup>",
+                                                                outformat='plotly_html')
 
 
+        return JsonResponse(dict(plot=flow_dur))
+
+    except Exception as e:
+        print(str(e))
+        return JsonResponse({'error': 'No historic data found for calculating flow duration curve.'})
 
 
-        era_res = requests.get(
-            app.get_custom_setting('api_source') + '/apps/streamflow-prediction-tool/api/GetHistoricData/?watershed_name=' +
-            watershed + '&subbasin_name=' + subbasin + '&reach_id=' + comid + '&return_format=csv',
-            headers={'Authorization': 'Token ' + app.get_custom_setting('spt_token')}, verify=False)
+def get_seasonal_avg_curve(request):
+    get_data = request.GET
 
-        era_pairs = era_res.content.splitlines()
-        era_pairs.pop(0)
+    try:
+        # model = get_data['model']
+        watershed = get_data['watershed']
+        subbasin = get_data['subbasin']
+        comid = get_data['comid']
+        tot_drain_area = get_data['tot_drain_area']
+        region = get_data['region']
+        units = 'metric'
 
-        era_values = []
+        # New api
+        seasonal_avg = geoglows.streamflow.seasonal_average(comid)
+        seasonal_plot = geoglows.streamflow.seasonal_plot(seasonal_avg, drain_area=tot_drain_area+" km<sup>2</sup>",
+                                                          outformat='plotly_html')
 
-        for era_pair in era_pairs:
-            era_pair = era_pair.decode('utf-8')
-            era_values.append(float(era_pair.split(',')[1]))
 
-        sorted_daily_avg = np.sort(era_values)[::-1]
-
-        # ranks data from smallest to largest
-        ranks = len(sorted_daily_avg) - sp.rankdata(sorted_daily_avg,
-                                                    method='average')
-
-        # calculate probability of each rank
-        prob = [100*(ranks[i] / (len(sorted_daily_avg) + 1))
-                for i in range(len(sorted_daily_avg))]
-
-        flow_duration_sc = go.Scatter(
-            x=prob,
-            y=sorted_daily_avg,
-        )
-
-        layout = go.Layout(title="Flow-Duration Curve<br><sub>{0} ({1}): {2}<br>Total upstream drainage area: {3} km<sup>2</sup></sub>".format(
-            watershed, subbasin, comid, tot_drain_area),
-            xaxis=dict(
-            title='Exceedance Probability (%)',),
-            yaxis=dict(
-            title='Streamflow ({}<sup>3</sup>/s)'
-            .format(get_units_title(units)),
-            type='log',
-            autorange=True),
-            showlegend=False)
-
-        chart_obj = PlotlyView(
-            go.Figure(data=[flow_duration_sc],
-                      layout=layout)
-        )
-
-        context = {
-            'gizmo_object': chart_obj,
-        }
-
-        return render(request, '{0}/gizmo_ajax.html'.format(base_name), context)
+        return JsonResponse(dict(plot=seasonal_plot))
 
     except Exception as e:
         print(str(e))
@@ -500,25 +460,13 @@ def get_historic_data_csv(request):
         subbasin = get_data['subbasin_name']
         comid = get_data['reach_id']
 
-        # New api (Historical simulation returns a csv)
-        rperiods = geoglows.streamflow.return_periods(comid, 'o314noias', api_source=geoglows.streamflow.BYU_ENDPOINT)
-        historic_sim = geoglows.streamflow.historic_simulation(comid, 'o314noias', return_format='csv', api_source=geoglows.streamflow.BYU_ENDPOINT)
-
-
-
-
-        era_res = requests.get(
-            app.get_custom_setting('api_source') + '/apps/streamflow-prediction-tool/api/GetHistoricData/?watershed_name=' +
-            watershed + '&subbasin_name=' + subbasin + '&reach_id=' + comid + '&return_format=csv',
-            headers={'Authorization': 'Token ' + app.get_custom_setting('spt_token')}, verify=False)
-
-        qout_data = era_res.content.splitlines()
-        qout_data.pop(0)
+        # New api
+        historic_sim = geoglows.streamflow.historic_simulation(comid, 'o314noias', return_format='request',
+                                                               endpoint=geoglows.streamflow.BYU_ENDPOINT)
+        qout_data = historic_sim.content.decode('utf-8').splitlines()
 
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=historic_streamflow_{0}_{1}_{2}.csv'.format(watershed,
-                                                                                                            subbasin,
-                                                                                                            comid)
+        response['Content-Disposition'] = 'attachment; filename=historic_streamflow_{0}.csv'.format(comid)
 
         writer = csv_writer(response)
 
@@ -552,32 +500,15 @@ def get_forecast_data_csv(request):
             startdate = 'most_recent'
 
         # New api
-        stats = geoglows.streamflow.forecast_stats(comid, 'o314noias', api_source=geoglows.streamflow.BYU_ENDPOINT)
-        ensembles = geoglows.streamflow.forecast_ensembles(comid, 'o314noias', return_format='csv', api_source=geoglows.streamflow.BYU_ENDPOINT)
-        r_periods = geoglows.streamflow.return_periods(comid, 'o314noias', api_source=geoglows.streamflow.BYU_ENDPOINT)
-
-        forecast_plot = geoglows.streamflow.forecast_plot(stats, r_periods, comid, outformat='plotly_html')
-        prob_table = geoglows.streamflow.probabilities_table(stats, ensembles, r_periods)
+        forecast_stats = geoglows.streamflow.forecast_stats(comid, return_format='request',
+                                                            endpoint=geoglows.streamflow.BYU_ENDPOINT)
 
 
-
-
-
-        res = requests.get(
-            app.get_custom_setting('api_source') + '/apps/streamflow-prediction-tool/api/GetForecast/?watershed_name=' +
-            watershed + '&subbasin_name=' + subbasin + '&reach_id=' + comid + '&forecast_folder=' +
-            startdate + '&return_format=csv',
-            headers={'Authorization': 'Token ' + app.get_custom_setting('spt_token')}, verify=False)
-
-        qout_data = res.content.splitlines()
-        qout_data.pop(0)
+        qout_data = forecast_stats.content.decode('utf-8').splitlines()
 
         init_time = qout_data[0].split(',')[0].split(' ')[0]
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=streamflow_forecast_{0}_{1}_{2}_{3}.csv'.format(watershed,
-                                                                                                                subbasin,
-                                                                                                                comid,
-                                                                                                                init_time)
+        response['Content-Disposition'] = 'attachment; filename=streamflow_forecast_{0}_{1}.csv'.format(comid, init_time)
 
         writer = csv_writer(response)
         writer.writerow(['datetime', 'high_res (m3/s)', 'max (m3/s)', 'mean (m3/s)', 'min (m3/s)', 'std_dev_range_lower (m3/s)',
@@ -715,8 +646,8 @@ def forecastpercent(request):
             forecast = 'most_recent'
         else:
             forecast = str(date)
-# res = requests.get(app.get_custom_setting('api_source') + '/apps/streamflow-prediction-tool/api/GetWatersheds/',
-    #                    headers={'Authorization': 'Token ' + app.get_custom_setting('spt_token')})
+        # res = requests.get(app.get_custom_setting('api_source') + '/apps/streamflow-prediction-tool/api/GetWatersheds/',
+            #                    headers={'Authorization': 'Token ' + app.get_custom_setting('spt_token')})
         request_params = dict(watershed_name=watershed, subbasin_name=subbasin, reach_id=reach,
                               forecast_folder=forecast)
         request_headers = dict(Authorization='Token ' + app.get_custom_setting('spt_token'))

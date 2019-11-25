@@ -21,6 +21,7 @@ var default_extent,
 var $loading = $('#view-file-loading');
 var m_downloaded_historical_streamflow = false;
 var m_downloaded_flow_duration = false;
+var m_downloaded_seasonal_avg = false;
 
 const glofasURL = `http://globalfloods-ows.ecmwf.int/glofas-ows/ows.py`
 
@@ -419,7 +420,8 @@ function get_time_series(model, watershed, subbasin, comid, startdate, tot_drain
         type: 'GET',
         url: 'get-time-series/',
         data: {
-            'comid': comid
+            'comid': comid,
+            'tot_drain_area': tot_drain_area
         },
         error: function() {
             $('#info').html('<p class="alert alert-danger" style="text-align: center"><strong>An unknown error occurred while retrieving the forecast</strong></p>');
@@ -439,20 +441,20 @@ function get_time_series(model, watershed, subbasin, comid, startdate, tot_drain
 
                 //resize main graph
                 Plotly.Plots.resize($("#long-term-chart .js-plotly-plot")[0]);
-//
-//                var params = {
-//                    watershed_name: watershed,
-//                    subbasin_name: subbasin,
-//                    reach_id: comid,
-//                    startdate: startdate,
-//                };
-//
-//                $('#submit-download-forecast').attr({
-//                    target: '_blank',
-//                    href: 'get-forecast-data-csv?' + jQuery.param(params)
-//                });
-//
-//                $('#download_forecast').removeClass('hidden');
+
+                var params = {
+                    watershed_name: watershed,
+                    subbasin_name: subbasin,
+                    reach_id: comid,
+                    startdate: startdate,
+                };
+
+                $('#submit-download-forecast').attr({
+                    target: '_blank',
+                    href: 'get-forecast-data-csv?' + jQuery.param(params)
+                });
+
+                $('#download_forecast').removeClass('hidden');
 
             } else if (data.error) {
                 $('#info').html('<p class="alert alert-danger" style="text-align: center"><strong>An unknown error occurred while retrieving the forecast</strong></p>');
@@ -476,7 +478,9 @@ function get_historic_data(model, watershed, subbasin, comid, startdate, tot_dra
         type: 'GET',
         url: 'get-historic-data',
         data: {
-            'comid': comid
+            'comid': comid,
+            'tot_drain_area': tot_drain_area
+
         },
         success: function(data) {
             if (!data.error) {
@@ -484,19 +488,19 @@ function get_historic_data(model, watershed, subbasin, comid, startdate, tot_dra
                 $('#historical-chart').removeClass('hidden');
                 $('#historical-chart').html(data['plot']);
 
-//                var params = {
-//                    watershed_name: watershed,
-//                    subbasin_name: subbasin,
-//                    reach_id: comid,
-//                    daily: false
-//                };
-//
-//                $('#submit-download-interim-csv').attr({
-//                    target: '_blank',
-//                    href: 'get-historic-data-csv?' + jQuery.param(params)
-//                });
-//
-//                $('#download_interim').removeClass('hidden');
+                var params = {
+                    watershed_name: watershed,
+                    subbasin_name: subbasin,
+                    reach_id: comid,
+                    daily: false
+                };
+
+                $('#submit-download-interim-csv').attr({
+                    target: '_blank',
+                    href: 'get-historic-data-csv?' + jQuery.param(params)
+                });
+
+                $('#download_interim').removeClass('hidden');
 
             } else if (data.error) {
                 $('#info').html('<p class="alert alert-danger" style="text-align: center"><strong>An unknown error occurred while retrieving the historic data</strong></p>');
@@ -532,7 +536,7 @@ function get_flow_duration_curve(model, watershed, subbasin, comid, startdate, t
             if (!data.error) {
                 $('#fdc-view-file-loading').addClass('hidden');
                 $('#fdc-chart').removeClass('hidden');
-                $('#fdc-chart').html(data);
+                $('#fdc-chart').html(data['plot']);
             } else if (data.error) {
                 $('#info').html('<p class="alert alert-danger" style="text-align: center"><strong>An unknown error occurred while retrieving the historic data</strong></p>');
                 $('#info').removeClass('hidden');
@@ -546,6 +550,43 @@ function get_flow_duration_curve(model, watershed, subbasin, comid, startdate, t
         }
     });
 };
+
+
+function get_seasonal_avg_curve(model, watershed, subbasin, comid, startdate, tot_drain_area, region) {
+    $('#savg-view-file-loading').removeClass('hidden');
+    m_downloaded_seasonal_avg = true;
+    $.ajax({
+        type: 'GET',
+        url: 'get-seasonal-avg-curve',
+        data: {
+            'model': model,
+            'watershed': watershed,
+            'subbasin': subbasin,
+            'comid': comid,
+            'startdate': startdate,
+            'tot_drain_area': tot_drain_area,
+            'region': region
+        },
+        success: function(data) {
+            if (!data.error) {
+                $('#savg-view-file-loading').addClass('hidden');
+                $('#savg-chart').removeClass('hidden');
+                $('#savg-chart').html(data['plot']);
+            } else if (data.error) {
+                $('#info').html('<p class="alert alert-danger" style="text-align: center"><strong>An unknown error occurred while retrieving the historic data</strong></p>');
+                $('#info').removeClass('hidden');
+
+                setTimeout(function() {
+                    $('#info').addClass('hidden')
+                }, 5000);
+            } else {
+                $('#info').html('<p><strong>An unexplainable error occurred.</strong></p>').removeClass('hidden');
+            }
+        }
+    });
+};
+
+
 
 function get_forecast_percent(watershed, subbasin, comid, startdate) {
     $('#mytable').addClass('hidden');
@@ -693,7 +734,9 @@ function map_events() {
                             get_available_dates(model, watershed, subbasin, comid);
                             get_time_series(model, watershed, subbasin, comid, startdate, tot_drain_area, region);
                             get_historic_data(model, watershed, subbasin, comid, startdate, tot_drain_area, region);
-                            //get_flow_duration_curve(model, watershed, subbasin, comid, startdate, tot_drain_area, region);
+                            get_flow_duration_curve(model, watershed, subbasin, comid, startdate, tot_drain_area, region);
+                            get_seasonal_avg_curve(model, watershed, subbasin, comid, startdate, tot_drain_area, region);
+
 //                            if (model === 'ECMWF-RAPID') {
 //                                get_forecast_percent(watershed, subbasin, comid, startdate);
 //                            };
@@ -774,6 +817,12 @@ function resize_graphs() {
     $("#flow_duration_tab_link").click(function() {
         if (m_downloaded_flow_duration) {
             Plotly.Plots.resize($("#fdc-chart .js-plotly-plot")[0]);
+        }
+    });
+
+    $("#seasonal_avg_tab_link").click(function() {
+        if (m_downloaded_seasonal_avg) {
+            Plotly.Plots.resize($("#savg-chart .js-plotly-plot")[0]);
         }
     });
 };
