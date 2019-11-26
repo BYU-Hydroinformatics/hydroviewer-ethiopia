@@ -511,8 +511,8 @@ def get_forecast_data_csv(request):
         response['Content-Disposition'] = 'attachment; filename=streamflow_forecast_{0}_{1}.csv'.format(comid, init_time)
 
         writer = csv_writer(response)
-        writer.writerow(['datetime', 'high_res (m3/s)', 'max (m3/s)', 'mean (m3/s)', 'min (m3/s)', 'std_dev_range_lower (m3/s)',
-                         'std_dev_range_upper (m3/s)'])
+        #writer.writerow(['datetime', 'high_res (m3/s)', 'max (m3/s)', 'mean (m3/s)', 'min (m3/s)', 'std_dev_range_lower (m3/s)',
+                         #'std_dev_range_upper (m3/s)'])
 
         for row_data in qout_data:
             writer.writerow(row_data.split(','))
